@@ -81,10 +81,9 @@ const DisplayAlbum = () => {
         {albumData.songs.map((item, index) => (
           <div 
             key={index} 
-            // This is the single-click handler (plays the song)
+            // This is the single-click handler (plays the song)
             onClick={() => playWithId(item._id)} 
-            // NEW: This is the double-click handler (also plays the song)
-            onDoubleClick={() => playWithId(item._id)} 
+           
             className='grid grid-cols-3 md:grid-cols-[1fr_2fr_1fr_1fr] gap-x-4 items-center text-gray-200 hover:bg-gray-800 p-2 rounded cursor-pointer'
           >
             <p className='col-span-1 md:col-span-1'>{index + 1}</p>

@@ -21,16 +21,48 @@ const PlayerContextProvider = (props) => {
         }
     });
 
+    // Helper function to handle the playback logic
+    const attemptPlay = async (song) => {
+        if (!audioRef.current || !song) {
+            console.error("AudioRef or selected song is not available.");
+            return;
+        }
+
+        // 1. Set the track state (async update)
+        setTrack(song); 
+
+        // 2. Set audio source immediately
+        audioRef.current.src = song.file;
+        audioRef.current.load(); 
+
+        try {
+            // 3. Attempt to play
+            await audioRef.current.play();
+            setPlayStatus(true);
+        } catch (error) {
+            // 4. Handle Autoplay prevention
+            if (error.name === "NotAllowedError" || error.name === "AbortError") {
+                console.warn("Autoplay prevented: The user needs to manually click play.");
+                // IMPORTANT: If playback is blocked, the song IS NOT playing. Set status to false.
+                setPlayStatus(false); 
+            } else {
+                console.error("Error attempting to play audio:", error);
+                setPlayStatus(false);
+            }
+        }
+    }
+    
+    // --- Public Player Controls ---
+
     const play = () => {
-        // Only attempt to play if a track is loaded
-        if (track) {
+        if (track && audioRef.current) {
             audioRef.current.play();
             setPlayStatus(true);
         }
     };
 
     const pause = () => {
-        if (track) {
+        if (track && audioRef.current) {
             audioRef.current.pause();
             setPlayStatus(false);
         }
@@ -39,21 +71,8 @@ const PlayerContextProvider = (props) => {
     const playWithId = async (id) => {
         const selectedSong = songs.find(song => song._id === id);
         if (selectedSong) {
-            setTrack(selectedSong);
-            
-            // CRITICAL: Set the audio source here for seamless transition
-            if (audioRef.current) {
-                audioRef.current.src = selectedSong.file;
-                try {
-                    await audioRef.current.play();
-                    setPlayStatus(true);
-                } catch (error) {
-                    console.error("Autoplay prevented:", error);
-                    // User may need to interact first, but the source is set
-                }
-            } else {
-                console.error("AudioRef is not available.");
-            }
+            // Use the new helper function for playback
+            await attemptPlay(selectedSong);
         }
     };
     
@@ -61,9 +80,9 @@ const PlayerContextProvider = (props) => {
     const playPrevious = () => {
         if (track && songs.length > 0) {
             const currentIndex = songs.findIndex(song => song._id === track._id);
-            // Cycle back to the last song if at the first
             const newIndex = (currentIndex - 1 + songs.length) % songs.length;
-            playWithId(songs[newIndex]._id);
+            // Directly use the new song object for playback
+            attemptPlay(songs[newIndex]);
         }
     };
     
@@ -71,16 +90,17 @@ const PlayerContextProvider = (props) => {
     const playNext = () => {
         if (track && songs.length > 0) {
             const currentIndex = songs.findIndex(song => song._id === track._id);
-            // Cycle back to the first song if at the last
             const newIndex = (currentIndex + 1) % songs.length;
-            playWithId(songs[newIndex]._id);
+            // Directly use the new song object for playback
+            attemptPlay(songs[newIndex]);
         }
     };
 
     const toggleLoop = () => {
-        setIsLooping(prev => !prev);
+        const newLoopStatus = !isLooping;
+        setIsLooping(newLoopStatus);
         if (audioRef.current) {
-            audioRef.current.loop = !isLooping; 
+            audioRef.current.loop = newLoopStatus; 
         }
     };
 
@@ -90,6 +110,8 @@ const PlayerContextProvider = (props) => {
         }
     };
 
+    // --- Effects ---
+
     // 1. EFFECT: Fetch songs and set initial track
     useEffect(() => {
         const fetchSongs = async () => {
@@ -97,7 +119,7 @@ const PlayerContextProvider = (props) => {
                 const res = await axios.get("https://spotgpt-backend.onrender.com/api/song/list");
                 setSongs(res.data.songs);
                 if (res.data.songs.length > 0) {
-                    // Only set the track state here
+                    // Set the initial track state. Do NOT attempt to play here due to Autoplay rules.
                     setTrack(res.data.songs[0]);
                 }
             } catch (err) {
@@ -108,12 +130,9 @@ const PlayerContextProvider = (props) => {
     }, []);
 
     // 2. EFFECT: Handle audio playback events (runs when track/isLooping/songs changes)
+    // NOTE: We don't need to set audioRef.current.src here anymore since attemptPlay does it.
     useEffect(() => {
-        // IMPORTANT: Only proceed if audioRef.current and track are available
         if (track && audioRef.current) {
-            // CRITICAL FIX: Set the audio source once the track is set and the ref is ready
-            audioRef.current.src = track.file;
-
             // Define event handlers
             const updateTime = () => {
                 if (isNaN(audioRef.current.duration)) return;
