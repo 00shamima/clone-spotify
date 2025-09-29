@@ -1,5 +1,5 @@
 {
-  "name": "My Music App",
+  "name": "clone-spotify",
   "short_name": "MyMusicc",
   "start_url": "/clone-spotify/",
   "display": "standalone",
