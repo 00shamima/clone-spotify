@@ -84,7 +84,7 @@ export const Player = () => {
                 <img className='w-4' src={assets.zoom_icon} alt="" />
             </div>
             
-            {/* Audio element: REMOVED src attribute, it's set dynamically in the context */}
+          
             <audio ref={audioRef} preload="auto"></audio>
         </div>
     );
