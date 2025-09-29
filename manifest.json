@@ -1,0 +1,25 @@
+{
+  "name": "My Music App",
+  "short_name": "MyMusicc",
+  "start_url": "/clone-spotify/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/clone-spotify/icon192.jpeg", 
+      "sizes": "192x192",
+      "type": "image/jpeg" 
+    },
+    {
+      "src": "/clone-spotify/icon512.jpeg", 
+      "sizes": "512x512",
+      "type": "image/jpeg" 
+    },
+     {
+      "src": "/clone-spotify/icon150.jpeg", 
+      "sizes": "150x150",
+      "type": "image/jpeg" 
+    }
+  ]
+}
